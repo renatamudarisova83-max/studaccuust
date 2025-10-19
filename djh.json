@@ -1,0 +1,8 @@
+{
+    "name": "Личный кабинет студента",
+    "short_name": "Студент ЛК",
+    "start_url": "/",
+    "display": "standalone",
+    "theme_color": "#800080",
+    "background_color": "#ffffff"
+}
