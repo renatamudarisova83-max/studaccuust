@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#800080">
+    <title>Личный кабинет студента</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Студент ЛК">
+    <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==">
+    <style>
+        :root {
+            --primary-color: #800080;
+            --secondary-color: #4b0082;
+            --bg-color: #f8f4ff;
+            --text-color: #2c3e50;
+            --card-bg: #ffffff;
+            --header-bg: rgba(255, 255, 255, 0.95);
+        }
+        .dark-theme {
+            --primary-color: #bb86fc;
+            --secondary-color: #3700b3;
+            --bg-color: #121212;
+            --text-color: #e0e0e0;
+            --card-bg: #1e1e1e;
+            --header-bg: rgba(30, 30, 30, 0.95);
+        }
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: var(--text-color);
+            transition: all 0.3s ease;
+        }
+        .login-container {
+            background: var(--header-bg);
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+        .dashboard {
+            width: 100%;
+            max-width: 1400px;
+            display: none;
+        }
+        .header {
+            background: var(--header-bg);
+            color: var(--text-color);
+            padding: 30px;
+            text-align: center;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            position: relative;
+        }
+        .menu {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+        .menu button {
+            padding: 15px 30px;
+            background: linear-gradient(45deg, #ffd700, #ffed4e);
+            color: #4b0082;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        .menu button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+        .content {
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            min-height: 300px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: var(--text-color);
+            font-weight: bold;
+        }
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            box-sizing: border-box;
+            transition: border-color 0.3s;
+            background: var(--card-bg);
+            color: var(--text-color);
+        }
+        .form-group input:focus {
+            border-color: var(--primary-color);
+            outline: none;
+        }
+        .login-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+        .theme-toggle, .notifications-btn, .settings-btn {
+            position: absolute;
+            top: 20px;
+            padding: 10px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 18px;
+            width: 40px;
+            height: 40px;
+        }
+        .theme-toggle { left: 20px; }
+        .notifications-btn { left: 70px; background: #e74c3c; }
+        .settings-btn { right: 120px; background: #3498db; }
+        .logout-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 10px 20px;
+            background: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        @media (max-width: 768px) {
+            body { padding: 10px; }
+            .login-container { padding: 20px; margin: 10px; }
+            .header { padding: 20px 10px; }
+            .menu button { padding: 12px 15px; font-size: 14px; }
+            .content { padding: 20px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container" id="loginContainer">
+        <h1>Вход в личный кабинет</h1>
+        <div class="form-group">
+            <label for="fio">ФИО:</label>
+            <input type="text" id="fio" value="Мударисова Рената Альфридовна">
+        </div>
+        <div class="form-group">
+            <label for="password">Пароль:</label>
+            <input type="password" id="password" value="123456">
+        </div>
+        <button class="login-btn" onclick="login()">Войти</button>
+        <div class="error-message" id="errorMessage" style="color: #e74c3c; margin-top: 10px; display: none;">
+            Неверные данные для входа.
+        </div>
+    </div>
+
+    <div class="dashboard" id="dashboard">
+        <button class="theme-toggle" onclick="toggleTheme()">🌙</button>
+        <button class="notifications-btn" onclick="toggleNotifications()">🔔</button>
+        <button class="settings-btn" onclick="showSettings()">⚙️</button>
+        <button class="logout-btn" onclick="logout()">Выйти</button>
+        
+        <div class="header">
+            <h1>Личный кабинет студента</h1>
+            <p id="studentName">Мударисова Рената Альфридовна, 1 курс</p>
+        </div>
+        
+        <div class="menu">
+            <button onclick="showSchedule()">📅 Расписание</button>
+            <button onclick="showGrades()">📊 Успеваемость</button>
+            <button onclick="showHomework()">📚 Домашнее задание</button>
+            <button onclick="showChat()">💬 Чат</button>
+            <button onclick="showProfile()">👤 Профиль</button>
+        </div>
+        
+        <div class="content" id="content">
+            <h2>Добро пожаловать!</h2>
+            <p>Выберите раздел в меню выше</p>
+        </div>
+    </div>
+
+    <script>
+        const validCredentials = {
+            fio: "Мударисова Рената Альфридовна",
+            password: "123456"
+        };
+
+        const studentData = {
+            schedule: {
+                "Понедельник": ["8:00-9:20 - Математический Анализ", "9:35-10:55 - Физическая Культура"],
+                "Вторник": ["8:00-9:20 - Программно-аппаратный комплекс", "9:35-10:55 - Алгебра и геометрия"]
+            },
+            grades: [
+                {subject: "Математический Анализ", grade: 5},
+                {subject: "Физическая Культура", grade: 5}
+            ]
+        };
+
+        function login() {
+            const fio = document.getElementById('fio').value;
+            const password = document.getElementById('password').value;
+            const errorMessage = document.getElementById('errorMessage');
+
+            if (fio === validCredentials.fio && password === validCredentials.password) {
+                document.getElementById('loginContainer').style.display = 'none';
+                document.getElementById('dashboard').style.display = 'block';
+                errorMessage.style.display = 'none';
+            } else {
+                errorMessage.style.display = 'block';
+            }
+        }
+
+        function logout() {
+            document.getElementById('loginContainer').style.display = 'block';
+            document.getElementById('dashboard').style.display = 'none';
+        }
+
+        function toggleTheme() {
+            document.body.classList.toggle('dark-theme');
+        }
+
+        function showSchedule() {
+            let html = '<h2>📅 Расписание</h2>';
+            for (const day in studentData.schedule) {
+                html += `<h3>${day}</h3>`;
+                studentData.schedule[day].forEach(lesson => {
+                    html += `<div>📚 ${lesson}</div>`;
+                });
+            }
+            document.getElementById('content').innerHTML = html;
+        }
+
+        function showGrades() {
+            let html = '<h2>📊 Успеваемость</h2>';
+            studentData.grades.forEach(grade => {
+                html += `<div>${grade.subject}: ${grade.grade}</div>`;
+            });
+            document.getElementById('content').innerHTML = html;
+        }
+
+        function showHomework() {
+            document.getElementById('content').innerHTML = '<h2>📚 Домашние задания</h2><p>Функция в разработке</p>';
+        }
+
+        function showChat() {
+            document.getElementById('content').innerHTML = '<h2>💬 Чат</h2><p>Функция в разработке</p>';
+        }
+
+        function showProfile() {
+            document.getElementById('content').innerHTML = '<h2>👤 Профиль</h2><p>Мударисова Рената Альфридовна, 1 курс</p>';
+        }
+
+        function toggleNotifications() {
+            document.getElementById('content').innerHTML = '<h2>🔔 Уведомления</h2><p>Новых уведомлений нет</p>';
+        }
+
+        function showSettings() {
+            document.getElementById('content').innerHTML = '<h2>⚙️ Настройки</h2><p>Настройки профиля</p>';
+        }
+    </script>
+</body>
+</html>
