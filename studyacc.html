@@ -1,0 +1,1800 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#800080">
+    <title>Личный кабинет студента</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Студент ЛК">
+
+    <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==">
+    <style>
+        .voice-assistant {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+
+        .voice-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: linear-gradient(45deg, #FF6B6B, #FF8E53);
+            border: none;
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .voice-btn.listening {
+            background: linear-gradient(45deg, #4ECDC4, #44A08D);
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        .voice-status {
+            position: absolute;
+            bottom: 70px;
+            right: 0;
+            background: var(--card-bg);
+            padding: 10px 15px;
+            border-radius: 20px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            display: none;
+            min-width: 200px;
+            text-align: center;
+        }
+
+        .voice-commands {
+            position: absolute;
+            bottom: 120px;
+            right: 0;
+            background: var(--card-bg);
+            padding: 15px;
+            border-radius: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            display: none;
+            min-width: 250px;
+        }
+
+        .voice-commands h4 {
+            margin: 0 0 10px 0;
+            color: var(--primary-color);
+        }
+
+        .voice-commands ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .voice-commands li {
+            padding: 5px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        .voice-commands li:last-child {
+            border-bottom: none;
+        }
+
+        .search-container {
+            margin: 15px 0;
+        }
+
+        #globalSearch {
+            width: 100%;
+            max-width: 400px;
+            padding: 10px 15px;
+            border: 2px solid var(--primary-color);
+            border-radius: 25px;
+            font-size: 16px;
+            background: var(--card-bg);
+            color: var(--text-color);
+        }
+
+        .search-result {
+            background: var(--primary-color);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 10px;
+            margin: 5px;
+            display: inline-block;
+        }
+
+        .settings-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .settings-content {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        }
+        .settings-buttons {
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 20px;
+        }
+        .settings-buttons button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .save-btn {
+            background: #27ae60;
+            color: white;
+        }
+        .cancel-btn {
+            background: #95a5a6;
+            color: white;
+        }
+        :root {
+            --primary-color: #800080;
+            --secondary-color: #4b0082;
+            --bg-color: #f8f4ff;
+            --text-color: #2c3e50;
+            --card-bg: #ffffff;
+            --header-bg: rgba(255, 255, 255, 0.95);
+        }
+
+        .dark-theme {
+            --primary-color: #bb86fc;
+            --secondary-color: #3700b3;
+            --bg-color: #121212;
+            --text-color: #e0e0e0;
+            --card-bg: #1e1e1e;
+            --header-bg: rgba(30, 30, 30, 0.95);
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: var(--text-color);
+            transition: all 0.3s ease;
+        }
+
+        .login-container {
+            background: var(--header-bg);
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+        }
+
+        .dashboard {
+            width: 100%;
+            max-width: 1400px;
+            display: none;
+        }
+
+        .header {
+            background: var(--header-bg);
+            color: var(--text-color);
+            padding: 30px;
+            text-align: center;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+            position: relative;
+        }
+
+        .menu {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+
+        .menu button {
+            padding: 15px 30px;
+            background: linear-gradient(45deg, #ffd700, #ffed4e);
+            color: #4b0082;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .menu button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+
+        .content {
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            min-height: 300px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: var(--text-color);
+            font-weight: bold;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 16px;
+            box-sizing: border-box;
+            transition: border-color 0.3s;
+            background: var(--card-bg);
+            color: var(--text-color);
+        }
+
+        .form-group input:focus {
+            border-color: var(--primary-color);
+            outline: none;
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: all 0.3s;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+
+        .error-message {
+            color: #e74c3c;
+            margin-top: 10px;
+            display: none;
+        }
+
+        /* Стили для кнопок в десктопной версии */
+        .desktop-buttons {
+            position: absolute;
+            top: 30px;
+            right: 30px;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            z-index: 100;
+        }
+
+        .desktop-buttons .theme-toggle {
+            background: var(--primary-color);
+            color: white;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .desktop-buttons .notifications-btn {
+            background: #e74c3c;
+            color: white;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .desktop-buttons .settings-btn {
+            background: #3498db;
+            color: white;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .desktop-buttons .logout-btn {
+            background: #e74c3c;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .desktop-buttons button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        /* Стили для кнопок в мобильной версии */
+        .mobile-buttons {
+            display: none;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 15px;
+        }
+
+        .mobile-buttons button {
+            margin: 2px;
+            padding: 10px 14px;
+            font-size: 13px;
+            border-radius: 20px;
+            min-width: 60px;
+            border: none;
+            cursor: pointer;
+        }
+
+        .mobile-buttons .theme-toggle, 
+        .mobile-buttons .notifications-btn, 
+        .mobile-buttons .settings-btn {
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .mobile-buttons .logout-btn {
+            padding: 10px 16px;
+        }
+
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            height: 500px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            background: var(--card-bg);
+        }
+
+        .message {
+            margin-bottom: 15px;
+            padding: 10px 15px;
+            border-radius: 15px;
+            max-width: 70%;
+        }
+
+        .my-message {
+            background: var(--primary-color);
+            color: white;
+            margin-left: auto;
+            text-align: right;
+        }
+
+        .other-message {
+            background: #e0e0e0;
+            color: #333;
+        }
+
+        .message-sender {
+            font-weight: bold;
+            font-size: 12px;
+            margin-bottom: 5px;
+        }
+
+        .chat-input {
+            display: flex;
+            padding: 15px;
+            background: var(--card-bg);
+            border-top: 1px solid #ddd;
+        }
+
+        .chat-input input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 20px;
+            margin-right: 10px;
+            background: var(--card-bg);
+            color: var(--text-color);
+        }
+
+        .chat-input button {
+            padding: 10px 20px;
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+        }
+
+        .homework-item {
+            background: var(--card-bg);
+            padding: 20px;
+            margin-bottom: 15px;
+            border-radius: 10px;
+            border-left: 4px solid var(--primary-color);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .homework-subject {
+            font-weight: bold;
+            color: var(--primary-color);
+            margin-bottom: 5px;
+        }
+
+        .homework-deadline {
+            color: #e74c3c;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .homework-completed {
+            background: #27ae60;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            display: inline-block;
+        }
+
+        .homework-pending {
+            background: #f39c12;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            display: inline-block;
+        }
+
+        .calendar {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 5px;
+            margin-top: 20px;
+        }
+
+        .calendar-day {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            text-align: center;
+            cursor: pointer;
+            background: var(--card-bg);
+        }
+
+        .calendar-day.has-event {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .calendar-day.today {
+            border: 2px solid #e74c3c;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #ddd;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(45deg, var(--primary-color), var(--secondary-color));
+            transition: width 0.3s ease;
+        }
+
+        /* Медиа-запросы для мобильных устройств */
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+                font-size: 14px;
+            }
+            
+            .login-container {
+                padding: 25px 20px;
+                margin: 10px;
+                border-radius: 12px;
+            }
+            
+            .dashboard {
+                width: 100%;
+                max-width: 100%;
+            }
+            
+            .header {
+                padding: 20px 15px;
+                border-radius: 12px;
+                margin-bottom: 20px;
+            }
+            
+            .header h1 {
+                font-size: 1.4em;
+                margin-bottom: 10px;
+            }
+            
+            .menu {
+                gap: 8px;
+                margin: 20px 0;
+            }
+            
+            .menu button {
+                padding: 14px 12px;
+                font-size: 13px;
+                flex: 1 1 calc(50% - 8px);
+                min-width: 0;
+                border-radius: 20px;
+                margin: 2px;
+            }
+            
+            .content {
+                padding: 20px 15px;
+                margin: 0;
+                border-radius: 12px;
+            }
+            
+            /* Показываем мобильные кнопки и скрываем десктопные */
+            .desktop-buttons {
+                display: none;
+            }
+            
+            .mobile-buttons {
+                display: flex;
+            }
+            
+            .mobile-buttons button {
+                margin: 2px;
+                padding: 10px 14px;
+                font-size: 13px;
+                border-radius: 20px;
+                min-width: 60px;
+            }
+            
+            /* Улучшенный чат */
+            .chat-container {
+                height: 400px;
+            }
+            
+            .message {
+                max-width: 85%;
+                padding: 12px;
+                font-size: 14px;
+            }
+            
+            /* Улучшенные таблицы */
+            table {
+                font-size: 12px;
+                display: block;
+                overflow-x: auto;
+            }
+            
+            th, td {
+                padding: 10px 8px;
+                white-space: nowrap;
+            }
+            
+            /* Улучшенный календарь */
+            .calendar {
+                grid-template-columns: repeat(7, 1fr);
+                gap: 4px;
+            }
+            
+            .calendar-day {
+                padding: 8px 4px;
+                font-size: 12px;
+                min-height: 40px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            
+            /* Улучшенный поиск */
+            #globalSearch {
+                max-width: 100%;
+                font-size: 16px;
+            }
+            
+            /* Улучшенные карточки */
+            .homework-item {
+                padding: 15px;
+                margin-bottom: 12px;
+            }
+            
+            /* Голосовой помощник на мобильных */
+            .voice-assistant {
+                bottom: 15px;
+                right: 15px;
+            }
+            
+            .voice-btn {
+                width: 55px;
+                height: 55px;
+                font-size: 20px;
+            }
+            
+            .voice-commands {
+                bottom: 70px;
+                right: 0;
+                min-width: 280px;
+                font-size: 14px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .menu button {
+                flex: 1 1 100%;
+                padding: 16px 12px;
+                font-size: 14px;
+            }
+            
+            .header h1 {
+                font-size: 1.3em;
+            }
+            
+            .content h2 {
+                font-size: 1.3em;
+                margin-top: 0;
+            }
+            
+            .chat-container {
+                height: 350px;
+            }
+            
+            .mobile-buttons {
+                gap: 5px;
+            }
+            
+            .mobile-buttons button {
+                padding: 8px 12px;
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+   
+    <div class="login-container" id="loginContainer">
+        <h1>Вход в личный кабинет</h1>
+        <p>Введите ваши данные для доступа</p>
+        
+        <div class="form-group">
+            <label for="fio">ФИО:</label>
+            <input type="text" id="fio" placeholder="Введите ваше ФИО" value="Мударисова Рената Альфридовна">
+        </div>
+        
+        <div class="form-group">
+            <label for="password">Пароль:</label>
+            <input type="password" id="password" placeholder="Введите пароль" value="123456">
+        </div>
+        
+        <button class="login-btn" onclick="login()">Войти</button>
+        
+        <div class="error-message" id="errorMessage">
+            Неверные данные для входа. Попробуйте снова.
+        </div>
+
+        <div style="margin-top: 20px; font-size: 14px; color: #666;">
+            <strong>Тестовые данные уже введены</strong><br>
+            Нажмите "Войти"
+        </div>
+    </div>
+
+    <div class="dashboard" id="dashboard">
+        <!-- КНОПКИ ДЛЯ КОМПЬЮТЕРА (видны только на десктопе) -->
+        <div class="desktop-buttons">
+            <button class="theme-toggle" onclick="toggleTheme()">🌙</button>
+            <button class="notifications-btn" onclick="toggleNotifications()">🔔</button>
+            <button class="settings-btn" onclick="showSettings()">⚙️</button>
+            <button class="logout-btn" onclick="logout()">Выйти</button>
+        </div>
+        
+        <div class="header">
+            <h1>Личный кабинет студента</h1>
+            <p id="studentName">Мударисова Рената Альфридовна, 1 курс</p>
+            <div class="search-container">
+                <input type="text" id="globalSearch" placeholder="🔍 Поиск..." onkeyup="performSearch()">
+            </div>
+            <!-- КНОПКИ ДЛЯ ТЕЛЕФОНА (видны только на мобильных) -->
+            <div class="mobile-buttons">
+                <button class="theme-toggle" onclick="toggleTheme()">🌙</button>
+                <button class="notifications-btn" onclick="toggleNotifications()">🔔</button>
+                <button class="settings-btn" onclick="showSettings()">⚙️</button>
+                <button class="logout-btn" onclick="logout()">Выйти</button>
+            </div>
+        </div>
+        
+        <div class="menu">
+            <button onclick="showSchedule()">📅 Расписание</button>
+            <button onclick="showGrades()">📊 Успеваемость</button>
+            <button onclick="showRecordBook()">🎓 Электронная зачетка</button>
+            <button onclick="showCalendar()">📅 Календарь</button>
+            <button onclick="showProfile()">👤 Профиль</button>
+            <button onclick="showHomework()">📚 Домашнее задание</button>
+            <button onclick="showChat()">💬 Чат</button>
+            <button onclick="showProgress()">📈 Прогресс</button>
+            <button onclick="showAchievements()">🏆 Достижения</button>
+            <button onclick="showEvents()">🎪 Мероприятия</button>
+            <button onclick="showNotes()">📝 Заметки</button>
+        </div>
+        
+        <div class="content" id="content">
+            <h2>Добро пожаловать!</h2>
+            <p>Выберите раздел в меню выше</p>
+        </div>
+    </div>
+
+    <script>
+        // ВАШ ПОЛНЫЙ КОД ДАННЫХ И ФУНКЦИЙ
+        
+        const validCredentials = {
+            fio: "Мударисова Рената Альфридовна",
+            password: "123456"
+        };
+
+        const studentData = {
+            schedule: {
+                "Понедельник": [
+                    "8:00-9:20 - Занятие отсутствует",
+                    "9:35-10:55 - Занятие отсутствует",
+                    "11:35-12:55 - Математический Анализ (Лекция) (ауд. 6-415)",
+                    "13:10-14:30 - Физическая Культура (Семинар) (Корпус 3- Спортзал)", 
+                    "15:10-16:30 - Занятие отсутствует (Караоке)",
+                    "16:45-18:05 - Современная речевая культура (Практика) (ауд. 9-405)"
+                ],
+                "Вторник": [
+                    "8:00-9:20 - Математический Анализ (Лекция) (ауд. 7-206)",
+                    "9:35-10:55 - Программно-аппаратный комплекс (Лекция) (ауд. 6-211)",
+                    "11:35-12:55 - Занятие отсутствует",
+                    "13:10-14:30 - Современная речевая культура (Лекция) (ауд. 9-605)" 
+                ],
+                "Среда": [
+                    "8:00-9:20 - Алгебра и геометрия (Лекция) (ауд. 7-401)",
+                    "9:35-10:55 - Основы Информационных Технологий (Лекция) (ауд. 6-416)",
+                    "11:35-12:55 - Алгебра и геометрия (Практика) (ауд. 6-202)",
+                    "13:10-14:30 - Математический Анализ (Практика) (ауд. 6-207)", 
+                    "15:10-16:30 - Программно-аппаратный комплекс (Лабораторная Работа) (ауд. 6-311)",
+                    "16:45-18:05 - Программно-аппаратный комплекс (Лабораторная Работа) (ауд. 6-311)"
+                ],
+                "Четверг": [
+                    "8:00-9:20 - Занятие отсутствует",
+                    "9:35-10:55 - Занятие отсутствует",
+                    "11:35-12:55 - Занятие отсутствует",
+                    "13:10-14:30 - Основы Информационных Технологий (Практика) (ауд. 6-202)"
+                ],
+                "Пятница": [
+                    "8:00-9:20 - Алгебра и геометрия (Лекция) (ауд. 6-415)",
+                    "9:35-10:55 - Иностранный язык (Семинар) (ауд. 1-310)",
+                    "11:35-12:55 - Дискретная математика и математическая логика (Семинар) (ауд. 6-415)",
+                    "13:10-14:30 - Математический Анализ (Практика) (ауд. 6-415)" 
+                ],
+                "Суббота": [
+                    "11:00-16:00 - МФТИ (Лекция+ Практика) (Онлайн)"
+                ],
+                "Воскресенье": [
+                    "Отдых. УРАААААА🎉🎉🎉🎉🎉🎉🎉"
+                ]
+            },
+
+            grades: [
+                {subject: "Математический Анализ", grade: 5, teacher: "Кривошеева О.А."},
+                {subject: "Физическая Культура", grade: 5, teacher: "Я забыла. Извините"},
+                {subject: "Современная Речевая Культура", grade: 5, teacher: "Мустафина Г.Р."},
+                {subject: "Основы Российской Государственности", grade: 4, teacher: "Габдулхаков Р.Б."},
+                {subject: "Алгебра и Геометрия", grade: 5, teacher: "Гаянова М.М."},
+                {subject: "Основы Информационных Технологий", grade: 5, teacher: "Шахмаметова Г.З."},
+                {subject: "Программно-аппаратный Комплекс", grade: 5, teacher: "Костюкова А.П."},
+                {subject: "Дискретная Математика и Математическая Логика", grade: 5, teacher: "Шерыхалина Н.М."},
+                {subject: "Планирование Карьеры", grade: 5, teacher: "Белова А.С."},
+                {subject: "Проектная Деятельность", grade: 5, teacher: "Сазанова Е.Ю."},
+                {subject: "Иностранный язык", grade: 5, teacher: "Я опять забыла.Извините."}
+            ],
+
+            profile: {
+                "ФИО": "Мударисова Рената Альфридовна",
+                "Группа": "ТОП-103б", 
+                "Факультет": "ИИМиРТ",
+                "Курс": "1",
+                "Специальность": "Программная инженерия",
+                "Email": "renatamudarisova83@gmail.com",
+                "Телефон": "+7 (999) 455-56-26"
+            },
+
+            homework: [
+                {
+                    subject: "Математический Анализ",
+                    task: "Решить задачи по пределам: №518,521,523,532. Подготовиться к к.р. и зачету",
+                    deadline: "15.12.2024",
+                    completed: false
+                },
+                {
+                    subject: "Программно-аппаратный Комплекс",
+                    task: "Лабораторная работа №3: Сборка ПК",
+                    deadline: "20.12.2024",
+                    completed: true
+                },
+                {
+                    subject: "Алгебра и Геометрия",
+                    task: "Решить задачи:№3.79,3.81,3.86,3.88,3.107,3.108,3.116,3.117,3.119 ",
+                    deadline: "18.12.2024",
+                    completed: false
+                },
+                {
+                    subject: "Основы Информационных Технологий",
+                    task: "Проект: Создание базы данных",
+                    deadline: "25.12.2024",
+                    completed: false
+                },
+                {
+                    subject: "Дискретная Математика",
+                    task: "Задачи по теории графов",
+                    deadline: "22.12.2024",
+                    completed: true
+                }
+            ],
+            events: [
+                {
+                    title: "Хакатон по программированию",
+                    date: "2025-10-28",
+                    time: "10:00",
+                    location: "Главный корпус, ауд. 6-201",
+                    description: "10-дневное соревнование по разработке IT-проектов",
+                    type: "competition"
+                },
+                {
+                    title: "Лекция от IT-CODE", 
+                    date: "2025-10-8",
+                    time: "15:00",
+                    location: "Актовый зал",
+                    description: "Приглашенные специалисты из IT-CODE расскажут о карьере в IT",
+                    type: "lecture"
+                },
+                {
+                    title: "Идем всей группой в караоке",
+                    date: "2025-12-28",
+                    time: "18:00", 
+                    location: "Party Launge",
+                    description: "Традиционный новогодний вечер для студентов и преподавателей",
+                    type: "party"
+                }
+            ],
+
+            chatMessages: [
+                {
+                    sender: "Антон Гасников",
+                    message: "Привет всем! Кто-то уже сделал лабу по ПАК?",
+                    time: "10:30"
+                },
+                {
+                    sender: "Я",
+                    message: "Я почти закончила, осталось тестирование",
+                    time: "10:32"
+                },
+                {
+                    sender: "Александра Антипова",
+                    message: "Ребята, напоминаю про собрание завтра в 14:00",
+                    time: "11:15"
+                },
+                {
+                    sender: "Тимур Валиахметов",
+                    message: "Кто хочет в библиотеку позаниматься?",
+                    time: "12:00"
+                }
+            ],
+
+            recordBook: {
+                "1 семестр": [
+                    {subject: "Математический анализ", grades: [5, 4, 5, 5], final: 5},
+                    {subject: "Основы Информационных Технологий", grades: [5, 5, 5, 5], final: 5},
+                    {subject: "Алгебра и Геометрия", grades: [4, 5, 4, 5], final: 5},
+                    {subject: "Основы Российской Государственности", grades: [4, 5, 5], final: 5}
+                ]
+            },
+            
+            calendar: {
+                "2025-10-15": "Сдача матанализа",
+                "2025-10-20": "Лабораторная работа ПАК",
+                "2025-10-25": "Проект по ОИТ",
+                "2025-12-30": "Начало сессии"
+            },
+            
+            progress: {
+                attendance: 85,
+                assignments: 70,
+                averageGrade: 4.8,
+                chatActivity: 60
+            },
+
+            achievements: [
+                {id: 1, name: "Первая пятерка", icon: "⭐", earned: true, description: "Получите первую оценку 5"},
+                {id: 2, name: "Старательный студент", icon: "📚", earned: true, description: "Выполните 5 домашних заданий"},
+                {id: 3, name: "Общительный", icon: "💬", earned: true, description: "Напишите 5 сообщений в чате"},
+                {id: 4, name: "Отличник", icon: "🏆", earned: false, description: "Получите все пятерки"},
+                {id: 5, name: "Пунктуальный", icon: "⏰", earned: false, description: "Посещайте занятия регулярно"},
+                {id: 6, name: "Исследователь", icon: "🔍", earned: false, description: "Воспользуйтесь поиском"},
+                {id: 7, name: "Организованный", icon: "📝", earned: false, description: "Создайте 3 заметки"}
+            ],
+            notes: [
+                {id: 1, title: "Важные формулы по математике", content: "Формула производной: (x^n)' = n*x^(n-1)\nФормула интеграла: ∫x^n dx = x^(n+1)/(n+1) + C", subject: "Математический Анализ", date: "2024-12-10"},
+                {id: 2, title: "Список литературы", content: "Обязательная литература:\n1. Книга по программированию\n2. Учебник по математике\n3. Конспекты лекций", subject: "Общее", date: "2024-12-12"}
+            ]
+        };
+
+        const voiceCommandsMap = {
+            'расписание': showSchedule,
+            'оценки': showGrades,
+            'домашнее задание': showHomework,
+            'профиль': showProfile,
+            'чат': showChat,
+            'прогресс': showProgress,
+            'достижения': showAchievements,
+            'заметки': showNotes,
+            'календарь': showCalendar,
+            'зачётка': showRecordBook,
+            'уведомления': toggleNotifications
+        };
+
+        function login() {
+            const fio = document.getElementById('fio').value;
+            const password = document.getElementById('password').value;
+            const errorMessage = document.getElementById('errorMessage');
+
+            if (fio === validCredentials.fio && password === validCredentials.password) {
+                document.getElementById('loginContainer').style.display = 'none';
+                document.getElementById('dashboard').style.display = 'block';
+                document.getElementById('studentName').textContent = fio + ', 1 курс';
+                errorMessage.style.display = 'none';
+            } else {
+                errorMessage.style.display = 'block';
+                document.getElementById('password').value = '';
+            }
+        }
+
+        function logout() {
+            document.getElementById('loginContainer').style.display = 'block';
+            document.getElementById('dashboard').style.display = 'none';
+            document.getElementById('fio').value = validCredentials.fio;
+            document.getElementById('password').value = validCredentials.password;
+            document.getElementById('errorMessage').style.display = 'none';
+        }
+
+        function toggleTheme() {
+            document.body.classList.toggle('dark-theme');
+            localStorage.setItem('theme', document.body.classList.contains('dark-theme') ? 'dark' : 'light');
+        }
+
+        if (localStorage.getItem('theme') === 'dark') {
+            document.body.classList.add('dark-theme');
+        }
+
+        function showSchedule() {
+            let html = '<h2>📅 Мое расписание</h2>';
+            
+            for (const day in studentData.schedule) {
+                html += '<div style="background: #e8f4f8; padding: 20px; border-radius: 10px; margin: 15px 0;">';
+                html += '<h3 style="color: #2c3e50; margin-top: 0;">' + day + '</h3>';
+                
+                studentData.schedule[day].forEach(function(lesson) {
+                    html += '<div style="padding: 10px; margin: 5px 0; background: white; border-radius: 5px;">';
+                    html += '📚 ' + lesson;
+                    html += '</div>';
+                });
+                
+                html += '</div>';
+            }
+            
+            document.getElementById('content').innerHTML = html;
+        }
+
+        function showGrades() {
+            const totalSubjects = studentData.grades.length;
+            const excellentGrades = studentData.grades.filter(function(g) {
+                return g.grade === 5;
+            }).length;
+            
+            const sum = studentData.grades.reduce(function(total, g) {
+                return total + g.grade;
+            }, 0);
+            const averageGrade = (sum / totalSubjects).toFixed(2);
+            
+            let html = '<h2>📊 Успеваемость</h2>';
+            html += '<div style="display: flex; gap: 20px; margin-bottom: 20px;">';
+            html += '<div style="flex: 1; background: #e8f4f8; padding: 15px; border-radius: 10px; text-align: center;">';
+            html += '<h3 style="margin: 0; color: #2c3e50;">' + totalSubjects + '</h3>';
+            html += '<p style="margin: 0;">всего предметов</p>';
+            html += '</div>';
+            html += '<div style="flex: 1; background: #e8f4f8; padding: 15px; border-radius: 10px; text-align: center;">';
+            html += '<h3 style="margin: 0; color: #27ae60;">' + excellentGrades + '</h3>';
+            html += '<p style="margin: 0;">отличных оценок</p>';
+            html += '</div>';
+            html += '<div style="flex: 1; background: #e8f4f8; padding: 15px; border-radius: 10px; text-align: center;">';
+            html += '<h3 style="margin: 0; color: #3498db;">' + averageGrade + '</h3>';
+            html += '<p style="margin: 0;">средний балл</p>';
+            html += '</div>';
+            html += '</div>';
+            
+            html += '<table style="width: 100%; border-collapse: collapse;">';
+            html += '<tr style="background: #34495e; color: white;">';
+            html += '<th style="padding: 12px; border: 1px solid #ddd;">Предмет</th>';
+            html += '<th style="padding: 12px; border: 1px solid #ddd;">Оценка</th>';
+            html += '<th style="padding: 12px; border: 1px solid #ddd;">Преподаватель</th>';
+            html += '</tr>';
+            
+            studentData.grades.forEach(function(grade) {
+                let color = '#e74c3c';
+                if (grade.grade === 5) color = '#27ae60';
+                if (grade.grade === 4) color = '#f39c12';
+                
+                html += '<tr>';
+                html += '<td style="padding: 12px; border: 1px solid #ddd;">' + grade.subject + '</td>';
+                html += '<td style="padding: 12px; border: 1px solid #ddd; color: ' + color + '; font-weight: bold; text-align: center;">' + grade.grade + '</td>';
+                html += '<td style="padding: 12px; border: 1px solid #ddd;">' + grade.teacher + '</td>';
+                html += '</tr>';
+            });
+            
+            html += '</table>';
+            document.getElementById('content').innerHTML = html;
+        }
+
+        function showProfile() {
+            let html = '<h2>👤 Личный профиль</h2>';
+            html += '<div style="display: flex; gap: 30px;">';
+            html += '<div style="flex: 1;">';
+            html += '<div style="background: #e8f4f8; padding: 25px; border-radius: 10px;">';
+            html += '<h3 style="color: #2c3e50; margin-top: 0;">Основная информация</h3>';
+            
+            for (const key in studentData.profile) {
+                html += '<p><strong>' + key + ':</strong> ' + studentData.profile[key] + '</p>';
+            }
+            
+            html += '</div>';
+            html += '</div>';
+            html += '<div style="flex: 1;">';
+            html += '<div style="background: #fff8e1; padding: 25px; border-radius: 10px;">';
+            html += '<h3 style="color: #2c3e50; margin-top: 0;">Достижения</h3>';
+            html += '<p>✅ Успешно сдана сессия (я надеюсь)</p>';
+            html += '<p>✅ Участие в олимпиаде по программированию</p>';
+            html += '<p>✅ Активность в научной работе</p>';
+            html += '<p>📈 Отличная успеваемость</p>';
+            html += '</div>';
+            html += '</div>';
+            html += '</div>';
+            
+            document.getElementById('content').innerHTML = html;
+        }
+
+        function showHomework() {
+            let html = '<h2>📚 Домашние задания</h2>';
+            html += '<p>Всего заданий: ' + studentData.homework.length + '</p>';
+            
+            studentData.homework.forEach(function(hw, index) {
+                const statusClass = hw.completed ? 'homework-completed' : 'homework-pending';
+                const statusText = hw.completed ? 'Выполнено' : 'В процессе';
+                
+                html += '<div class="homework-item">';
+                html += '<div class="homework-subject">' + hw.subject + '</div>';
+                html += '<div class="homework-deadline">📅 Срок сдачи: ' + hw.deadline + '</div>';
+                html += '<div style="margin-bottom: 10px;">' + hw.task + '</div>';
+                html += '<span class="' + statusClass + '">' + statusText + '</span>';
+                html += '<button onclick="toggleHomework(' + index + ')" style="margin-left: 10px; padding: 5px 10px; background: var(--primary-color); color: white; border: none; border-radius: 5px; cursor: pointer;">';
+                html += hw.completed ? 'Отметить как невыполненное' : 'Отметить как выполненное';
+                html += '</button>';
+                html += '</div>';
+            });
+            
+            document.getElementById('content').innerHTML = html;
+        }
+
+        function toggleHomework(index) {
+            studentData.homework[index].completed = !studentData.homework[index].completed;
+            showHomework();
+        }
+
+        function showChat() {
+            let html = '<h2>💬 Чат с одногруппниками</h2>';
+            html += '<div class="chat-container">';
+            html += '<div class="chat-messages" id="chatMessages">';
+            
+            studentData.chatMessages.forEach(function(msg) {
+                const messageClass = msg.sender === 'Я' ? 'my-message' : 'other-message';
+                html += `<div class="message ${messageClass}">`;
+                html += `<div class="message-sender">${msg.sender} • ${msg.time}</div>`;
+                html += `<div>${msg.message}</div>`;
+                html += '</div>';
+            });
+            
+            html += '</div>';
+            html += '<div class="chat-input">';
+            html += '<input type="text" id="newMessage" placeholder="Введите сообщение...">';
+            html += '<button onclick="sendMessage()">Отправить</button>';
+            html += '</div>';
+            html += '</div>';
+            
+            document.getElementById('content').innerHTML = html;
+            
+            setTimeout(() => {
+                const chatMessages = document.getElementById('chatMessages');
+                if (chatMessages) {
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                }
+            }, 100);
+        }
+
+        function sendMessage() {
+            const input = document.getElementById('newMessage');
+            const message = input.value.trim();
+            
+            if (message) {
+                const newMessage = {
+                    sender: 'Я',
+                    message: message,
+                    time: new Date().toLocaleTimeString('ru-RU', {hour: '2-digit', minute:'2-digit'})
+                };
+                
+                studentData.chatMessages.push(newMessage);
+                input.value = '';
+                showChat();
+            }
+        }
+
+        function showRecordBook() {
+            let html = '<h2>🎓 Электронная зачетка</h2>';
+            html += '<div style="background: var(--card-bg); padding: 20px; border-radius: 10px; margin: 10px 0;">';
+            
+            studentData.recordBook["1 семестр"].forEach(subject => {
+                const avg = subject.grades.reduce((a, b) => a + b, 0) / subject.grades.length;
+                html += `
+                    <div style="padding: 15px; margin: 10px 0; border-bottom: 1px solid #ddd;">
+                        <h4>${subject.subject}</h4>
+                        <div>Текущие оценки: ${subject.grades.join(', ')}</div>
+                        <div>Средний балл: ${avg.toFixed(2)}</div>
+                        <div>Итоговая оценка: <strong>${subject.final}</strong></div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            
+            document.getElementById('content').innerHTML = html;
+        }
+
+        function showCalendar() {
+            let html = '<h2>📅 Календарь событий</h2>';
+            
+            html += '<div class="calendar">';
+            for (let i = 1; i <= 31; i++) {
+                const date = `2024-12-${i.toString().padStart(2, '0')}`;
+                const hasEvent = studentData.calendar[date];
+                const isToday = i === 15;
+                
+                html += `<div class="calendar-day ${hasEvent ? 'has-event' : ''} ${isToday ? 'today' : ''}">${i}</div>`;
+            }
+            html += '</div>';
+            
+            html += '<div style="margin-top: 20px;">';
+            html += '<h3>Ближайшие события:</h3>';
+            for (const [date, event] of Object.entries(studentData.calendar)) {
+                html += `<div style="padding: 10px; border-left: 3px solid var(--primary-color); margin: 5px 0;">
+                         <strong>${date}</strong>: ${event}</div>`;
+            }
+            html += '</div>';
+            
+            document.getElementById('content').innerHTML = html;
+        }
+
+        function showProgress() {
+            let html = '<h2>📈 Мой прогресс</h2>';
+            
+            html += `
+                <div style="background: var(--card-bg); padding: 20px; border-radius: 10px; margin: 10px 0;">
+                    <h4>Посещаемость</h4>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${studentData.progress.attendance}%"></div>
+                    </div>
+                    <div>${studentData.progress.attendance}%</div>
+                </div>
+                
+                <div style="background: var(--card-bg); padding: 20px; border-radius: 10px; margin: 10px 0;">
+                    <h4>Выполненные задания</h4>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${studentData.progress.assignments}%"></div>
+                    </div>
+                    <div>${studentData.progress.assignments}%</div>
+                </div>
+                
+                <div style="background: var(--card-bg); padding: 20px; border-radius: 10px; margin: 10px 0;">
+                    <h4>Средний балл</h4>
+                    <div style="font-size: 24px; font-weight: bold; color: var(--primary-color);">
+                        ${studentData.progress.averageGrade}
+                    </div>
+                </div>
+                
+                <div style="background: var(--card-bg); padding: 20px; border-radius: 10px; margin: 10px 0;">
+                    <h4>Активность в чате</h4>
+                    <div class="progress-bar">
+                        <div class="progress-fill" style="width: ${studentData.progress.chatActivity}%"></div>
+                    </div>
+                    <div>${studentData.progress.chatActivity}%</div>
+                </div>
+            `;
+            
+            document.getElementById('content').innerHTML = html;
+        }
+
+        function showEvents() {
+            let html = '<h2>🎪 Ближайшие мероприятия</h2>';
+            
+            studentData.events.forEach(event => {
+                const eventIcons = {
+                    'competition': '🏆',
+                    'lecture': '🎓',
+                    'party': '🎉'
+                };
+                
+                html += `
+                    <div style="background: var(--card-bg); padding: 20px; margin: 15px 0; border-radius: 10px; border-left: 4px solid var(--primary-color);">
+                        <div style="display: flex; align-items: center; margin-bottom: 10px;">
+                            <span style="font-size: 24px; margin-right: 10px;">${eventIcons[event.type]}</span>
+                            <h3 style="margin: 0; color: var(--primary-color);">${event.title}</h3>
+                        </div>
+                        <p><strong>📅 Дата:</strong> ${event.date} в ${event.time}</p>
+                        <p><strong>📍 Место:</strong> ${event.location}</p>
+                        <p>${event.description}</p>
+                    </div>
+                `;
+            });
+            
+            document.getElementById('content').innerHTML = html;
+        }
+
+        function toggleNotifications() {
+            let html = '<h2>🔔 Уведомления</h2>';
+            html += '<p>Здесь будут ваши уведомления</p>';
+            document.getElementById('content').innerHTML = html;
+        }
+
+        document.getElementById('password').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                login();
+            }
+        });
+
+        document.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && document.getElementById('newMessage')) {
+                sendMessage();
+            }
+        });
+
+        window.onload = function() {
+            document.getElementById('fio').value = validCredentials.fio;
+            document.getElementById('password').value = validCredentials.password;
+        };
+
+        function showSettings() {
+            document.getElementById('editEmail').value = studentData.profile.Email;
+            document.getElementById('editPhone').value = studentData.profile.Телефон;
+            document.getElementById('settingsModal').style.display = 'flex';
+        }
+
+        function hideSettings() {
+            document.getElementById('settingsModal').style.display = 'none';
+        }
+
+        function saveSettings() {
+            const newEmail = document.getElementById('editEmail').value;
+            const newPhone = document.getElementById('editPhone').value;
+            
+            studentData.profile.Email = newEmail;
+            studentData.profile.Телефон = newPhone;
+            
+            hideSettings();
+
+            alert('Данные успешно сохранены!');
+        }
+
+        document.getElementById('settingsModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                hideSettings();
+            }
+        });
+
+        function performSearch() {
+            const query = document.getElementById('globalSearch').value.toLowerCase();
+            if (query.length < 2) {
+                showSearchHelp();
+                return;
+            }
+
+            let results = [];
+            
+            for (const day in studentData.schedule) {
+                studentData.schedule[day].forEach(lesson => {
+                    if (lesson.toLowerCase().includes(query)) {
+                        results.push({type: '📅 Расписание', content: `${day}: ${lesson}`});
+                    }
+                });
+            }
+            
+            studentData.grades.forEach(grade => {
+                if (grade.subject.toLowerCase().includes(query) || 
+                    grade.teacher.toLowerCase().includes(query)) {
+                    results.push({type: '📊 Успеваемость', content: `${grade.subject}: ${grade.grade} (${grade.teacher})`});
+                }
+            });
+            
+            studentData.homework.forEach(hw => {
+                if (hw.subject.toLowerCase().includes(query) || 
+                    hw.task.toLowerCase().includes(query)) {
+                    results.push({type: '📚 ДЗ', content: `${hw.subject}: ${hw.task}`});
+                }
+            });
+
+            showSearchResults(query, results);
+        }
+
+        function showSearchHelp() {
+            let html = '<h2>🔍 Поиск по кабинету</h2>';
+            html += '<p>Введите запрос для поиска по:</p>';
+            html += '<ul>';
+            html += '<li>📅 Расписанию занятий</li>';
+            html += '<li>📊 Успеваемости и предметам</li>';
+            html += '<li>📚 Домашним заданиям</li>';
+            html += '</ul>';
+            html += '<p>Минимум 2 символа</p>';
+            document.getElementById('content').innerHTML = html;
+        }
+
+        function showSearchResults(query, results) {
+            let html = `<h2>🔍 Результаты поиска: "${query}"</h2>`;
+            
+            if (results.length === 0) {
+                html += '<p>Ничего не найдено 😔</p>';
+                html += '<p>Попробуйте другие ключевые слова</p>';
+            } else {
+                html += `<p>Найдено результатов: <strong>${results.length}</strong></p>`;
+                
+                const grouped = {};
+                results.forEach(result => {
+                    if (!grouped[result.type]) grouped[result.type] = [];
+                    grouped[result.type].push(result);
+                });
+                
+                for (const type in grouped) {
+                    html += `<h3>${type}</h3>`;
+                    grouped[type].forEach(result => {
+                        html += `<div class="search-result">${result.content}</div><br>`;
+                    });
+                }
+            }
+            
+            document.getElementById('content').innerHTML = html;
+        }
+
+        function showAchievements() {
+            const earned = studentData.achievements.filter(a => a.earned);
+            const notEarned = studentData.achievements.filter(a => !a.earned);
+            const progress = Math.round((earned.length / studentData.achievements.length) * 100);
+            
+            let html = '<h2>🏆 Мои достижения</h2>';
+            html += `<div style="background: var(--card-bg); padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+                <h3>Прогресс: ${progress}%</h3>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: ${progress}%"></div>
+                </div>
+                <p>Получено: <strong>${earned.length}</strong> из ${studentData.achievements.length}</p>
+            </div>`;
+            
+            html += '<h3>✅ Полученные достижения:</h3>';
+            if (earned.length === 0) {
+                html += '<p>Пока нет полученных достижений</p>';
+            } else {
+                earned.forEach(ach => {
+                    html += `<div style="background: var(--card-bg); padding: 15px; margin: 10px 0; border-radius: 10px; border-left: 4px solid #27ae60;">
+                        <span style="font-size: 24px;">${ach.icon}</span>
+                        <strong style="font-size: 18px;">${ach.name}</strong><br>
+                        <small>${ach.description}</small>
+                    </div>`;
+                });
+            }
+            
+            html += '<h3>🔒 Предстоящие достижения:</h3>';
+            if (notEarned.length === 0) {
+                html += '<p>Все достижения получены! 🎉</p>';
+            } else {
+                notEarned.forEach(ach => {
+                    html += `<div style="background: var(--card-bg); padding: 15px; margin: 10px 0; border-radius: 10px; border-left: 4px solid #95a5a6; opacity: 0.7;">
+                        <span style="font-size: 24px;">${ach.icon}</span>
+                        <strong style="font-size: 18px;">${ach.name}</strong><br>
+                        <small>${ach.description}</small>
+                    </div>`;
+                });
+            }
+            
+            document.getElementById('content').innerHTML = html;
+        }
+
+        function showNotes() {
+            let html = '<h2>📝 Мои заметки</h2>';
+            html += '<button onclick="showAddNoteForm()" style="padding: 10px 20px; background: var(--primary-color); color: white; border: none; border-radius: 10px; margin-bottom: 20px; cursor: pointer;">+ Добавить заметку</button>';
+            
+            if (studentData.notes.length === 0) {
+                html += '<p>Пока нет заметок. Создайте первую!</p>';
+            } else {
+                studentData.notes.forEach(note => {
+                    html += `<div style="background: var(--card-bg); padding: 20px; margin: 15px 0; border-radius: 10px; border-left: 4px solid var(--primary-color);">
+                        <h3 style="margin-top: 0; color: var(--primary-color);">${note.title}</h3>
+                        <p><strong>Предмет:</strong> ${note.subject}</p>
+                        <div style="background: #f8f9fa; padding: 15px; border-radius: 5px; margin: 10px 0;">
+                            <p style="white-space: pre-line; margin: 0;">${note.content}</p>
+                        </div>
+                        <small style="color: #666;">Дата создания: ${note.date}</small>
+                        <button onclick="deleteNote(${note.id})" style="margin-left: 10px; padding: 5px 10px; background: #e74c3c; color: white; border: none; border-radius: 5px; cursor: pointer;">Удалить</button>
+                    </div>`;
+                });
+            }
+            
+            document.getElementById('content').innerHTML = html;
+        }
+
+        function showAddNoteForm() {
+            let html = '<h2>📝 Создать новую заметку</h2>';
+            html += `
+                <div style="background: var(--card-bg); padding: 20px; border-radius: 10px;">
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: block; margin-bottom: 5px; font-weight: bold;">Заголовок:</label>
+                        <input type="text" id="noteTitle" placeholder="Введите заголовок заметки" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                    </div>
+                    
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: block; margin-bottom: 5px; font-weight: bold;">Предмет:</label>
+                        <input type="text" id="noteSubject" placeholder="Например: Математика" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                    </div>
+                    
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: block; margin-bottom: 5px; font-weight: bold;">Текст заметки:</label>
+                        <textarea id="noteContent" placeholder="Введите текст заметки..." style="width: 100%; height: 200px; padding: 10px; border: 1px solid #ddd; border-radius: 5px; resize: vertical;"></textarea>
+                    </div>
+                    
+                    <div>
+                        <button onclick="addNote()" style="padding: 10px 20px; background: var(--primary-color); color: white; border: none; border-radius: 10px; cursor: pointer;">💾 Сохранить заметку</button>
+                        <button onclick="showNotes()" style="padding: 10px 20px; background: #95a5a6; color: white; border: none; border-radius: 10px; margin-left: 10px; cursor: pointer;">❌ Отмена</button>
+                    </div>
+                </div>
+            `;
+            document.getElementById('content').innerHTML = html;
+        }
+
+        function addNote() {
+            const title = document.getElementById('noteTitle').value.trim();
+            const subject = document.getElementById('noteSubject').value.trim();
+            const content = document.getElementById('noteContent').value.trim();
+            
+            if (!title) {
+                alert('Введите заголовок заметки');
+                return;
+            }
+            
+            if (!content) {
+                alert('Введите текст заметки');
+                return;
+            }
+
+            const newNote = {
+                id: Date.now(),
+                title: title,
+                subject: subject || 'Общее',
+                content: content,
+                date: new Date().toLocaleDateString('ru-RU')
+            };
+            
+            studentData.notes.push(newNote);
+            showNotes();
+        }
+
+        function deleteNote(id) {
+            if (confirm('Удалить эту заметку?')) {
+                studentData.notes = studentData.notes.filter(note => note.id !== id);
+                showNotes();
+            }
+        }
+
+        // ГОЛОСОВОЙ ПОМОЩНИК (только одна версия функций)
+        let recognition = null;
+        let isListening = false;
+
+        function initVoiceRecognition() {
+            if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+                console.log('Голосовые команды не поддерживаются в вашем браузере');
+                showVoiceStatus('Голосовые команды не поддерживаются', 'error');
+                return false;
+            }
+
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            recognition = new SpeechRecognition();
+            
+            recognition.continuous = false;
+            recognition.interimResults = false;
+            recognition.lang = 'ru-RU';
+            recognition.maxAlternatives = 1;
+
+            recognition.onstart = function() {
+                isListening = true;
+                updateVoiceUI(true);
+                showVoiceStatus('Слушаю... Говорите!', 'info');
+            };
+
+            recognition.onresult = function(event) {
+                const transcript = event.results[0][0].transcript.toLowerCase();
+                console.log('Распознано:', transcript);
+                showVoiceStatus(`Распознано: "${transcript}"`, 'success');
+                processVoiceCommand(transcript);
+            };
+
+            recognition.onerror = function(event) {
+                console.log('Ошибка распознавания:', event.error);
+                isListening = false;
+                updateVoiceUI(false);
+                
+                let errorMessage = 'Ошибка распознавания';
+                if (event.error === 'not-allowed') {
+                    errorMessage = 'Разрешите доступ к микрофону';
+                } else if (event.error === 'audio-capture') {
+                    errorMessage = 'Микрофон не найден';
+                } else if (event.error === 'network') {
+                    errorMessage = 'Проблемы с сетью';
+                }
+                
+                showVoiceStatus(errorMessage, 'error');
+            };
+
+            recognition.onend = function() {
+                isListening = false;
+                updateVoiceUI(false);
+            };
+
+            return true;
+        }
+
+        function processVoiceCommand(command) {
+            console.log('Распознанная команда:', command);
+            
+            const commands = {
+                'покажи расписание': showSchedule,
+                'расписание': showSchedule,
+                'какие оценки': showGrades,
+                'оценки': showGrades,
+                'что задали': showHomework,
+                'домашнее задание': showHomework,
+                'домашние задания': showHomework,
+                'мой профиль': showProfile,
+                'профиль': showProfile,
+                'открой чат': showChat,
+                'чат': showChat,
+                'покажи прогресс': showProgress,
+                'прогресс': showProgress,
+                'мои достижения': showAchievements,
+                'достижения': showAchievements,
+                'заметки': showNotes,
+                'покажи заметки': showNotes,
+                'календарь': showCalendar,
+                'покажи календарь': showCalendar,
+                'зачётка': showRecordBook,
+                'электронная зачётка': showRecordBook
+            };
+
+            if (command.includes('поиск') || command.includes('найди')) {
+                const searchQuery = command.replace(/поиск|найди/gi, '').trim();
+                if (searchQuery) {
+                    document.getElementById('globalSearch').value = searchQuery;
+                    performSearch();
+                    showVoiceStatus(`Ищу: ${searchQuery}`, 'success');
+                    return;
+                }
+            }
+
+            for (const [key, action] of Object.entries(commands)) {
+                if (command.includes(key)) {
+                    showVoiceStatus(`Выполняю: ${key}`, 'success');
+                    action();
+                    return;
+                }
+            }
+
+            showVoiceStatus('Команда не распознана. Скажите "помощь" для списка команд.', 'error');
+        }
+
+        function toggleVoiceAssistant() {
+            if (!recognition && !initVoiceRecognition()) {
+                alert('Голосовые команды не поддерживаются в вашем браузере. Попробуйте Chrome или Edge.');
+                return;
+            }
+
+            if (isListening) {
+                recognition.stop();
+            } else {
+                try {
+                    recognition.start();
+                } catch (error) {
+                    console.log('Ошибка запуска распознавания:', error);
+                }
+            }
+        }
+
+        function showVoiceCommands() {
+            const commandsElement = document.getElementById('voiceCommands');
+            commandsElement.style.display = commandsElement.style.display === 'block' ? 'none' : 'block';
+        }
+
+        function updateVoiceUI(listening) {
+            const voiceBtn = document.getElementById('voiceBtn');
+            const voiceStatus = document.getElementById('voiceStatus');
+            
+            if (listening) {
+                voiceBtn.classList.add('listening');
+                voiceBtn.textContent = '🔴';
+                voiceStatus.textContent = 'Слушаю...';
+                voiceStatus.style.display = 'block';
+            } else {
+                voiceBtn.classList.remove('listening');
+                voiceBtn.textContent = '🎤';
+                setTimeout(() => {
+                    voiceStatus.style.display = 'none';
+                }, 2000);
+            }
+        }
+
+        function showVoiceStatus(message, type = 'info') {
+            const voiceStatus = document.getElementById('voiceStatus');
+            voiceStatus.textContent = message;
+            voiceStatus.style.display = 'block';
+            
+            if (type === 'error') {
+                voiceStatus.style.background = 'linear-gradient(45deg, #FF6B6B, #FF8E53)';
+                voiceStatus.style.color = 'white';
+            } else if (type === 'success') {
+                voiceStatus.style.background = 'linear-gradient(45deg, #4ECDC4, #44A08D)';
+                voiceStatus.style.color = 'white';
+            } else {
+                voiceStatus.style.background = 'var(--card-bg)';
+                voiceStatus.style.color = 'var(--text-color)';
+            }
+            
+            setTimeout(() => {
+                voiceStatus.style.display = 'none';
+            }, 3000);
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const voiceBtn = document.getElementById('voiceBtn');
+            if (voiceBtn) {
+                voiceBtn.addEventListener('mouseenter', showVoiceCommands);
+                voiceBtn.addEventListener('mouseleave', function() {
+                    setTimeout(() => {
+                        const commandsElement = document.getElementById('voiceCommands');
+                        commandsElement.style.display = 'none';
+                    }, 1000);
+                });
+            }
+            
+            initVoiceRecognition();
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('fio').value = validCredentials.fio;
+            document.getElementById('password').value = validCredentials.password;
+            
+            if (initVoiceRecognition()) {
+                console.log('Голосовой помощник инициализирован');
+            } else {
+                console.log('Голосовой помощник недоступен');
+            }
+        });
+
+    </script>
+
+    <div class="settings-modal" id="settingsModal">
+        <div class="settings-content">
+            <h2>⚙️ Настройки профиля</h2>
+            <p>Измените ваши контактные данные</p>
+            
+            <div class="form-group">
+                <label for="editEmail">Email:</label>
+                <input type="email" id="editEmail" placeholder="Введите ваш email">
+            </div>
+            
+            <div class="form-group">
+                <label for="editPhone">Телефон:</label>
+                <input type="tel" id="editPhone" placeholder="Введите ваш телефон">
+            </div>
+            
+            <div class="settings-buttons">
+                <button class="cancel-btn" onclick="hideSettings()">Отмена</button>
+                <button class="save-btn" onclick="saveSettings()">Сохранить</button>
+            </div>
+        </div>
+    </div>
+   
+    <div class="voice-assistant">
+        <div class="voice-status" id="voiceStatus">Слушаю...</div>
+        <div class="voice-commands" id="voiceCommands">
+            <h4>Доступные команды:</h4>
+            <ul>
+                <li>"покажи расписание"</li>
+                <li>"какие оценки"</li>
+                <li>"что задали"</li>
+                <li>"мой профиль"</li>
+                <li>"открой чат"</li>
+                <li>"покажи прогресс"</li>
+                <li>"мои достижения"</li>
+                <li>"поиск [запрос]"</li>
+            </ul>
+        </div>
+        <button class="voice-btn" id="voiceBtn" onclick="toggleVoiceAssistant()">🎤</button>
+    </div>
+</body>
+</html>
